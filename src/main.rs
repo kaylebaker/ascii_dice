@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rand::Rng;
 use std::thread;
 use std::time::Duration;
-use crossterm::{execute, style::Print, cursor, terminal::{self, ClearType}, ExecutableCommand};
+use crossterm::{cursor, terminal, ExecutableCommand};
 use std::io::{stdout, Write};
 use anyhow::{Result, Error};
 
@@ -13,7 +13,7 @@ enum Pips {
     Three,
     Four,
     Five,
-    Six,
+    Six, 
 }
 
 impl Pips {
@@ -82,11 +82,7 @@ impl DiceCup {
 
         }
 
-        /* for i in 0..self.hm.len() {
-            println!("{}", self.hm[&i]);
-        } */
-
-        self.refresh_output();
+        let _ = self.refresh_output();
     }
 
     fn refresh_output(&mut self) -> Result<(), Error> {
@@ -145,10 +141,10 @@ fn main() {
             thread::sleep(Duration::from_millis(150));
             dicecup.generate_output();
         }
-        stdout.execute(cursor::MoveUp(3));
-        stdout.execute(cursor::MoveToColumn(0));
-        writeln!(stdout, "  {}", roll_count);
+        let _ = stdout.execute(cursor::MoveUp(3));
+        let _ = stdout.execute(cursor::MoveToColumn(0));
+        let _ = writeln!(stdout, "  {}", roll_count);
         roll_count += 1;
-        stdout.execute(cursor::MoveDown(3));
+        let _ = stdout.execute(cursor::MoveDown(3));
 }
 }
