@@ -1,7 +1,6 @@
-use std::io;
+use std::{io, thread::sleep};
 use std::collections::HashMap;
 use rand::Rng;
-use std::thread;
 use std::time::Duration;
 use crossterm::{cursor, terminal, ExecutableCommand};
 use std::io::{stdout, Write};
@@ -48,10 +47,33 @@ impl Dice {
         };
     }
 
-    fn _print_dice(&self) {
-        for line in self.current_face.as_array() {
-            println!("{}", line);
+    fn print_current_face(&mut self) -> Result<(), Error> {
+        let mut stdout = stdout();
+
+        for i in self.current_face.as_array() {
+            writeln!(stdout, "{}", i)?;
         }
+
+        Ok(())
+    }
+
+    fn print_roll(&mut self, rolls: i32, delay: u64) -> Result<(), Error> {
+        let mut stdout = stdout();
+        let _ = stdout.execute(cursor::Hide);
+
+        let _ = self.print_current_face();
+        for _ in 0..rolls {
+            // Move the cursor up 5 lines
+            stdout.execute(cursor::MoveUp(5))?;
+            // Clear the screen from cursor to the end
+            stdout.execute(terminal::Clear(terminal::ClearType::FromCursorDown))?;
+            self.roll_dice();
+            let _ = self.print_current_face();
+            sleep(Duration::from_millis(delay));
+        }
+        let _ = stdout.execute(cursor::Show);
+
+        Ok(())
     }
 }
 
@@ -111,7 +133,14 @@ impl DiceCup {
 
 fn main() {
 
-    let mut stdout = stdout();
+    let mut d6 = Dice {
+        current_face: Pips::One,
+    };
+
+    d6.roll_dice();
+    let _ = d6.print_roll(15, 100);
+
+    /* let mut stdout = stdout();
     let mut user_input = String::new();
     let mut roll_count = 1;
 
@@ -146,5 +175,5 @@ fn main() {
         let _ = writeln!(stdout, "  {}", roll_count);
         roll_count += 1;
         let _ = stdout.execute(cursor::MoveDown(3));
-}
+} */
 }
