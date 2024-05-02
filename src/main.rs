@@ -7,16 +7,18 @@ use crossterm::{cursor, terminal, ExecutableCommand};
 use std::io::{stdout, Write};
 use anyhow::{Result, Error};
 
+// Define an enum for different pip patterns on a dice face
 enum Pips {
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six, 
+    One = 1,
+    Two = 2,
+    Three = 3,
+    Four = 4,
+    Five = 5,
+    Six = 6,
 }
 
 impl Pips {
+    // Method to convert pip pattern to an array of strings for printing
     fn as_array(&self) -> &'static [&'static str] {
         match self {
             Pips::One => &["┌─────────┐", "│         │", "│    ●    │", "│         │", "└─────────┘"],
@@ -29,11 +31,13 @@ impl Pips {
     }
 }
 
+// Define a struct for a single dice
 struct Dice {
     current_face: Pips,
 }
 
 impl Dice {
+    // Method to roll the dice and update its face
     fn roll_dice(&mut self) {
         let mut rng = rand::thread_rng();
         let random_number = rng.gen_range(1..=6);
@@ -48,6 +52,7 @@ impl Dice {
         };
     }
 
+    // Method to print the current face of the dice
     fn _print_dice(&self) {
         for line in self.current_face.as_array() {
             println!("{}", line);
@@ -55,13 +60,15 @@ impl Dice {
     }
 }
 
+// Define a struct for a cup of dice
 struct DiceCup {
     dice: Vec<Dice>,
     hm: HashMap<usize, String>,
 }
 
 impl DiceCup {
-    fn fill_cup(&mut self, number_of_dice: u8) {
+    // Method to fill the cup with a specified number of dice
+    fn fill_cup(&mut self, number_of_dice: usize) {
         for _ in 0..number_of_dice {
             let d6 = Dice {
                 current_face: Pips::One,
@@ -69,54 +76,56 @@ impl DiceCup {
             self.dice.push(d6);
         }
     }
-
-    fn generate_output(&mut self) {
-        for dice in self.dice.iter_mut() {
-
-            for i in 0..5 {
-                let mut entry = if self.hm.contains_key(&i) { self.hm.get(&i).cloned().unwrap() } else { String::from("\t") };
-                entry.push_str("  ");
-                entry.push_str(dice.current_face.as_array()[i]);
-                self.hm.insert(i, entry);
-            }
-
-        }
-
-        let _ = self.refresh_output();
-    }
-
-    fn refresh_output(&mut self) -> Result<(), Error> {
-        let mut stdout = stdout();
-
-        // Move the cursor up 5 lines
-        stdout.execute(cursor::MoveUp(5))?;
-
-        // Clear the screen from cursor to the end
-        stdout.execute(terminal::Clear(terminal::ClearType::FromCursorDown))?;
-
-        for i in 0..self.hm.len() {
-            writeln!(stdout, "{}", self.hm[&i])?;
-        }
-
-        Ok(())
-    }
-
+    
+    // Method to roll all dice in the cup
     fn roll_cup(&mut self) {
         for dice in self.dice.iter_mut() {
             dice.roll_dice();
         }
     }
+
+    // Method to generate and display output for all dice in the cup
+    fn print_roll(&mut self) -> Result<(), Error> {
+        for dice in self.dice.iter_mut() {
+            for i in 0..5 {
+                let mut entry = if self.hm.contains_key(&i) {
+                    self.hm.get(&i).cloned().unwrap()
+                } else {
+                    String::from("\t")
+                };
+                entry.push_str("  ");
+                entry.push_str(dice.current_face.as_array()[i]);
+                self.hm.insert(i, entry);
+            }
+
+            let mut stdout = stdout();
+
+            // Move the cursor up 5 lines
+            stdout.execute(cursor::MoveUp(5))?;
+
+            // Clear the screen from cursor to the end
+            stdout.execute(terminal::Clear(terminal::ClearType::FromCursorDown))?;
+
+            for i in 0..self.hm.len() {
+                writeln!(stdout, "{}", self.hm[&i])?;
+            }
+            thread::sleep(Duration::from_millis(250));
+        }
+        Ok(())
+
+    }
+
 }
 
 
 fn main() {
-
     let mut stdout = stdout();
     let mut user_input = String::new();
     let mut roll_count = 1;
 
     println!("\n Roll #");
     println!("----------------------------------------------------------------------------------------------------------------------------------------------------\n");
+
     loop {
         user_input.clear();
 
@@ -128,23 +137,27 @@ fn main() {
         io::stdin().read_line(&mut user_input).expect("failed to read line");
         let user_input = user_input.trim();
 
-        let dice_qty: u8 = if user_input.chars().all(|c| c.is_numeric()) { user_input.parse().expect("Not a valid number") } else { break };
-        
+        // Check if the input is a valid number, else break the loop
+        let dice_qty: usize = if user_input.chars().all(|c| c.is_numeric()) {
+            user_input.parse().expect("Not a valid number")
+        } else {
+            break;
+        };
+
+        // Create a new DiceCup and fill it with dice
         let mut dicecup = DiceCup {
             dice: Vec::new(),
             hm: HashMap::new(),
         };
-        dicecup.fill_cup(1);
+        dicecup.fill_cup(dice_qty);
+        dicecup.roll_cup();
 
-        for _ in 0..dice_qty {
-            dicecup.roll_cup();
-            thread::sleep(Duration::from_millis(150));
-            dicecup.generate_output();
-        }
+        let _ = dicecup.print_roll();
+
         let _ = stdout.execute(cursor::MoveUp(3));
         let _ = stdout.execute(cursor::MoveToColumn(0));
         let _ = writeln!(stdout, "  {}", roll_count);
         roll_count += 1;
         let _ = stdout.execute(cursor::MoveDown(3));
-}
+    }
 }
