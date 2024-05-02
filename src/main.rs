@@ -8,6 +8,7 @@ use std::io::{stdout, Write};
 use anyhow::{Result, Error};
 
 // Define an enum for different pip patterns on a dice face
+#[derive(Clone, Copy)]
 enum Pips {
     One = 1,
     Two = 2,
@@ -115,6 +116,14 @@ impl DiceCup {
 
     }
 
+    fn save_current_faces(&self, vector: &mut Vec<Vec<i32>>) {
+        let mut faces: Vec<i32> = Vec::new();
+        for dice in &self.dice {
+            faces.push(dice.current_face as i32);
+        }
+        vector.push(faces);
+    }
+
 }
 
 
@@ -122,6 +131,7 @@ fn main() {
     let mut stdout = stdout();
     let mut user_input = String::new();
     let mut roll_count = 1;
+    let mut roll_results: Vec<Vec<i32>> = Vec::new();
 
     println!("\n Roll #");
     println!("----------------------------------------------------------------------------------------------------------------------------------------------------\n");
@@ -150,14 +160,19 @@ fn main() {
             hm: HashMap::new(),
         };
         dicecup.fill_cup(dice_qty);
-        dicecup.roll_cup();
 
+        dicecup.roll_cup();
         let _ = dicecup.print_roll();
+        dicecup.save_current_faces(&mut roll_results);
 
         let _ = stdout.execute(cursor::MoveUp(3));
         let _ = stdout.execute(cursor::MoveToColumn(0));
         let _ = writeln!(stdout, "  {}", roll_count);
         roll_count += 1;
         let _ = stdout.execute(cursor::MoveDown(3));
+    }
+
+    for vec in &roll_results {
+        println!("{:?}", vec);
     }
 }
