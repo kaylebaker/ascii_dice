@@ -7,6 +7,89 @@ use crossterm::{cursor, terminal, ExecutableCommand};
 use std::io::{stdout, Write};
 use anyhow::{Result, Error};
 
+// MODULE DEFINITIONS //
+
+mod statistics {
+
+    // data.iter() creates an iterator over the outer Vec<Vec<i32>>
+    // flat_map(|v| v.iter()) applies the given closure to each element, flattening the result into a single iterator
+
+    // Define traits that define a method that can be implemented
+    // on &[i32] and &Vec<Vec<i32>> (polymorphic behaviour)
+    pub trait Total {
+        fn total(&self) -> f64;
+    }
+
+    impl Total for &Vec<i32> {
+        fn total(&self) -> f64 {
+            let sum: i32 = self.iter().sum();
+            sum as f64
+        }
+    }
+
+    impl Total for Vec<Vec<i32>> {
+        fn total(&self) -> f64 {
+            let sum: i32 = self.iter().flat_map(|v| v.iter()).sum();
+        sum as f64
+        }
+    }
+
+    pub trait Average {
+        fn average(&self) -> f64;
+    }
+    
+    impl Average for &Vec<i32> {
+        fn average(&self) -> f64 {
+            let sum: i32 = self.iter().sum();
+            sum as f64 / self.len() as f64
+        }
+    }
+
+    impl Average for Vec<Vec<i32>> {
+        fn average(&self) -> f64 {
+            let sum: i32 = self.iter().flat_map(|v| v.iter()).sum();
+            sum as f64 / self.len() as f64
+        }
+    }
+
+    pub trait Lowest {
+        fn lowest(&self) -> i32;
+    }
+
+    impl Lowest for &Vec<i32> {
+        fn lowest(&self) -> i32 {
+            let min_value = self.iter().min().unwrap();
+            *min_value
+        }
+    }
+    impl Lowest for Vec<Vec<i32>> {
+        fn lowest(&self) -> i32 {
+            let min_value = self.iter().flat_map(|v| v.iter()).min().unwrap();
+            *min_value
+        }
+    }
+
+    pub trait Highest {
+        fn highest(&self) -> i32;
+    }
+
+    impl Highest for &Vec<i32> {
+        fn highest(&self) -> i32 {
+            let max_value = self.iter().max().unwrap();
+            *max_value
+        }
+    }
+    impl Highest for Vec<Vec<i32>> {
+        fn highest(&self) -> i32 {
+            let max_value = self.iter().flat_map(|v| v.iter()).max().unwrap();
+            *max_value
+        }
+    }
+}
+
+
+// ENUM AND STRUCT DEFINITIONS //
+
 // Define an enum for different pip patterns on a dice face
 #[derive(Clone, Copy)]
 enum Pips {
@@ -17,6 +100,20 @@ enum Pips {
     Five = 5,
     Six = 6,
 }
+
+// Define a struct for a single dice
+struct Dice {
+    current_face: Pips,
+}
+
+// Define a struct for a cup of dice
+struct DiceCup {
+    dice: Vec<Dice>,
+    hm: HashMap<usize, String>,
+}
+
+
+// IMPLEMENTATIONS DEFINITIONS //
 
 impl Pips {
     // Method to convert pip pattern to an array of strings for printing
@@ -30,11 +127,6 @@ impl Pips {
             Pips::Six => &["┌─────────┐", "│ ●     ● │", "│ ●     ● │", "│ ●     ● │", "└─────────┘"],
         }
     }
-}
-
-// Define a struct for a single dice
-struct Dice {
-    current_face: Pips,
 }
 
 impl Dice {
@@ -59,12 +151,6 @@ impl Dice {
             println!("{}", line);
         }
     }
-}
-
-// Define a struct for a cup of dice
-struct DiceCup {
-    dice: Vec<Dice>,
-    hm: HashMap<usize, String>,
 }
 
 impl DiceCup {
@@ -130,7 +216,11 @@ impl DiceCup {
 }
 
 
+
+// THE MAIN FUNCTION //
 fn main() {
+    use statistics::{ Total, Average, Highest, Lowest };
+
     let mut stdout = stdout();
     let mut user_input = String::new();
     let mut roll_count = 1;
@@ -177,51 +267,27 @@ fn main() {
 
     // The code below gathers stats of all the rolls and prints them to the console
 
-    let mut total_number_of_dice_rolled = 0;
-    let mut total_of_rolls_all = 0;
-    let mut highest_roll_all = 0;
-    let mut lowest_roll_all = 99;
-    let mut per_roll_stats: Vec<HashMap<&str, i32>> = vec![];
+    let total_dice_rolled: i32 = roll_results.iter().flat_map(|v| v.iter()).count() as i32;
     
     println!("\nHere are your results...");
     println!("\nROLL\tSTATS");
     println!("-----------------------------------------------");
-    
+
     for (i, vec) in roll_results.iter().enumerate() {
-        let mut temp_hm: HashMap<&str, i32> = HashMap::new();
-        let mut highest = 0;
-        let mut lowest = 99;
-        let mut total = 0;
 
-        for x in vec {
-            highest = if x > &highest { *x } else { highest };
-            lowest = if x < &lowest { *x } else { lowest };
-            total = total + x;
-        }
-        temp_hm.insert("total", total);
-        temp_hm.insert("highest", highest);
-        temp_hm.insert("lowest", lowest);
-
-        per_roll_stats.push(temp_hm);
-        
-        total_number_of_dice_rolled += vec.len();
-        total_of_rolls_all += total;
-        highest_roll_all = if highest > highest_roll_all { highest } else { highest_roll_all };
-        lowest_roll_all = if lowest < lowest_roll_all { lowest } else { lowest_roll_all };
-        
         println!("\n#{}\t{:?}", i + 1, vec);
         println!("\tYou rolled {} dice", vec.len());
-        println!("\tThe sum of these {} dice is {}", vec.len(), total);
-        println!("\tThe highest dice for this roll was a {}", highest);
-        println!("\tThe lowest dice for this roll was a {}", lowest);
+        println!("\tThe sum of these {} dice is {}", vec.len(), vec.total());
+        println!("\tThe highest dice for this roll was a {}", vec.highest());
+        println!("\tThe lowest dice for this roll was a {}", vec.lowest());
     }
-    println!("\n-----------------------------------------------");
-    println!("You rolled a total of {} dice!", total_number_of_dice_rolled);
-    println!("The total sum of all dice rolled is {}", total_of_rolls_all);
-    println!("The highest dice rolled of all dice was a {}", highest_roll_all);
-    println!("The lowest dice rolled of all dice was a {}", lowest_roll_all);
-}
 
+    println!("\n-----------------------------------------------");
+    println!("You rolled a total of {} dice!", total_dice_rolled);
+    println!("The total sum of all dice rolled is {}", roll_results.total());
+    println!("The highest dice rolled of all dice was a {}", roll_results.highest());
+    println!("The lowest dice rolled of all dice was a {}", roll_results.lowest());
+}
 
 
 
