@@ -87,6 +87,9 @@ impl DiceCup {
 
     // Method to generate and display output for all dice in the cup
     fn print_roll(&mut self) -> Result<(), Error> {
+        let mut stdout = stdout();
+        let _ = stdout.execute(cursor::Hide);
+        
         for dice in self.dice.iter_mut() {
             for i in 0..5 {
                 let mut entry = if self.hm.contains_key(&i) {
@@ -99,7 +102,6 @@ impl DiceCup {
                 self.hm.insert(i, entry);
             }
 
-            let mut stdout = stdout();
 
             // Move the cursor up 5 lines
             stdout.execute(cursor::MoveUp(5))?;
@@ -112,6 +114,7 @@ impl DiceCup {
             }
             thread::sleep(Duration::from_millis(250));
         }
+        let _ = stdout.execute(cursor::Show);
         Ok(())
 
     }
