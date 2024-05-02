@@ -54,7 +54,7 @@ impl Dice {
     }
 
     // Method to print the current face of the dice
-    fn _print_dice(&self) {
+    fn _print_face(&self) {
         for line in self.current_face.as_array() {
             println!("{}", line);
         }
@@ -89,7 +89,7 @@ impl DiceCup {
     fn print_roll(&mut self) -> Result<(), Error> {
         let mut stdout = stdout();
         let _ = stdout.execute(cursor::Hide);
-        
+
         for dice in self.dice.iter_mut() {
             for i in 0..5 {
                 let mut entry = if self.hm.contains_key(&i) {
@@ -137,12 +137,12 @@ fn main() {
     let mut roll_results: Vec<Vec<i32>> = Vec::new();
 
     println!("\n Roll #");
-    println!("----------------------------------------------------------------------------------------------------------------------------------------------------\n");
+    println!("--------------------------------------------------------------------------------------------------------------------------------\n");
 
     loop {
         user_input.clear();
 
-        println!("----------------------------------------------------------------------------------------------------------------------------------------------------");
+        println!("--------------------------------------------------------------------------------------------------------------------------------");
         println!("\nHow many dice would you like to roll?");
         writeln!(stdout, ">").unwrap();
         stdout.execute(cursor::MoveUp(1)).unwrap();
@@ -175,7 +175,83 @@ fn main() {
         let _ = stdout.execute(cursor::MoveDown(3));
     }
 
-    for vec in &roll_results {
-        println!("{:?}", vec);
+    // The code below gathers stats of all the rolls and prints them to the console
+
+    let mut total_number_of_dice_rolled = 0;
+    let mut total_of_rolls_all = 0;
+    let mut highest_roll_all = 0;
+    let mut lowest_roll_all = 99;
+    let mut per_roll_stats: Vec<HashMap<&str, i32>> = vec![];
+    
+    println!("\nHere are your results...");
+    println!("\nROLL\tSTATS");
+    println!("-----------------------------------------------");
+    
+    for (i, vec) in roll_results.iter().enumerate() {
+        let mut temp_hm: HashMap<&str, i32> = HashMap::new();
+        let mut highest = 0;
+        let mut lowest = 99;
+        let mut total = 0;
+
+        for x in vec {
+            highest = if x > &highest { *x } else { highest };
+            lowest = if x < &lowest { *x } else { lowest };
+            total = total + x;
+        }
+        temp_hm.insert("total", total);
+        temp_hm.insert("highest", highest);
+        temp_hm.insert("lowest", lowest);
+
+        per_roll_stats.push(temp_hm);
+        
+        total_number_of_dice_rolled += vec.len();
+        total_of_rolls_all += total;
+        highest_roll_all = if highest > highest_roll_all { highest } else { highest_roll_all };
+        lowest_roll_all = if lowest < lowest_roll_all { lowest } else { lowest_roll_all };
+        
+        println!("\n#{}\t{:?}", i + 1, vec);
+        println!("\tYou rolled {} dice", vec.len());
+        println!("\tThe sum of these {} dice is {}", vec.len(), total);
+        println!("\tThe highest dice for this roll was a {}", highest);
+        println!("\tThe lowest dice for this roll was a {}", lowest);
+    }
+    println!("\n-----------------------------------------------");
+    println!("You rolled a total of {} dice!", total_number_of_dice_rolled);
+    println!("The total sum of all dice rolled is {}", total_of_rolls_all);
+    println!("The highest dice rolled of all dice was a {}", highest_roll_all);
+    println!("The lowest dice rolled of all dice was a {}", lowest_roll_all);
+}
+
+// TESTS //
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_roll_dice() {
+        // Determine number of test runs
+        let num_runs = 100;
+
+        // Repeat test number of times as per num_runs
+        for _ in 0..num_runs {
+
+            // Create a dice instance
+            let mut dice = Dice { current_face: Pips::One };
+
+            // Roll the dice
+            dice.roll_dice();
+
+            // Check that the dice face is within valid range of Pip patterns
+            match dice.current_face {
+                Pips::One | Pips::Two | Pips::Three | Pips::Four | Pips::Five | Pips::Six => {
+                    // Test passed if the face is valid
+                    assert!(true);
+                }
+                _ => {
+                    // Test failed if the face is not valid
+                    assert!(false, "Invalid dice face after rolling");
+                }
+            }
+        }
     }
 }
