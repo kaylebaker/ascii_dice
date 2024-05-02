@@ -10,6 +10,7 @@ use anyhow::{Result, Error};
 // MODULE DEFINITIONS //
 
 mod statistics {
+    use std::collections::HashMap;
 
     // data.iter() creates an iterator over the outer Vec<Vec<i32>>
     // flat_map(|v| v.iter()) applies the given closure to each element, flattening the result into a single iterator
@@ -48,7 +49,8 @@ mod statistics {
     impl Average for Vec<Vec<i32>> {
         fn average(&self) -> f64 {
             let sum: i32 = self.iter().flat_map(|v| v.iter()).sum();
-            sum as f64 / self.len() as f64
+            let count = self.iter().flat_map(|v| v.iter()).count();
+            sum as f64 / count as f64
         }
     }
 
@@ -84,6 +86,35 @@ mod statistics {
             let max_value = self.iter().flat_map(|v| v.iter()).max().unwrap();
             *max_value
         }
+    }
+
+    pub trait FreqDist {
+        fn freq_dist(&self) -> HashMap<i32, i32>;
+    }
+
+    impl FreqDist for &Vec<i32> {
+        fn freq_dist(&self) -> HashMap<i32, i32> {
+            let mut hm: HashMap<i32, i32> = HashMap::from( [(1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0)] );
+            for &num in self.iter() {
+                *hm.entry(num).or_insert(0) += 1;
+            }
+
+            hm
+        }
+    }
+
+    impl FreqDist for Vec<Vec<i32>> {
+        fn freq_dist(&self) -> HashMap<i32, i32> {
+            let mut hm: HashMap<i32, i32> = HashMap::from( [(1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0)] );
+            for inner_vec in self.iter() {
+                for &num in inner_vec.iter() {
+                    *hm.entry(num).or_insert(0) += 1;
+                }
+            }
+            
+            hm
+        }
+
     }
 }
 
@@ -219,7 +250,7 @@ impl DiceCup {
 
 // THE MAIN FUNCTION //
 fn main() {
-    use statistics::{ Total, Average, Highest, Lowest };
+    use statistics::{ Total, Average, Highest, Lowest, FreqDist };
 
     let mut stdout = stdout();
     let mut user_input = String::new();
@@ -277,7 +308,8 @@ fn main() {
 
         println!("\n#{}\t{:?}", i + 1, vec);
         println!("\tYou rolled {} dice", vec.len());
-        println!("\tThe sum of these {} dice is {}", vec.len(), vec.total());
+        println!("\tThe sum of these dice is {}", vec.total());
+        println!("\tThe average roll is {}", vec.average());
         println!("\tThe highest dice for this roll was a {}", vec.highest());
         println!("\tThe lowest dice for this roll was a {}", vec.lowest());
     }
@@ -285,9 +317,21 @@ fn main() {
     println!("\n-----------------------------------------------");
     println!("You rolled a total of {} dice!", total_dice_rolled);
     println!("The total sum of all dice rolled is {}", roll_results.total());
+    println!("The average roll of all dice rolled is {}", roll_results.average());
     println!("The highest dice rolled of all dice was a {}", roll_results.highest());
     println!("The lowest dice rolled of all dice was a {}", roll_results.lowest());
+
+    println!("\nFREQUENCY DISTRIBUTION ({} dice)", total_dice_rolled);
+    println!("------------------------------------------");
+    let fd = roll_results.freq_dist();
+    println!("PIPS |  1  |  2  |  3  |  4  |  5  |  6  |");
+    println!("------------------------------------------");
+    println!("FREQ |  {:?}  |  {:?}  |  {:?}  |  {:?}  |  {:?}  |  {:?}  |", fd.get(&1).unwrap(), fd.get(&2).unwrap(), fd.get(&3).unwrap(), fd.get(&4).unwrap(), fd.get(&5).unwrap(), fd.get(&6).unwrap());
+    println!("------------------------------------------");
+
+    println!("");
 }
+
 
 
 
