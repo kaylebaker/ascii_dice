@@ -7,6 +7,8 @@ use crossterm::{cursor, terminal, ExecutableCommand};
 use std::io::{stdout, Write};
 use anyhow::{Result, Error};
 
+use crate::statistics::StdDev;
+
 // MODULE DEFINITIONS //
 
 mod statistics {
@@ -115,6 +117,26 @@ mod statistics {
             hm
         }
 
+    }
+
+    pub trait StdDev {
+        fn std_dev(&self) -> f64;
+    }
+
+    impl StdDev for Vec<Vec<i32>> {
+        fn std_dev(&self) -> f64 {
+            let mean: f64 = self.average();
+            let distance_sum: f64 = self
+                .iter()
+                .flat_map(|v| v.iter())
+                .map(|a| (*a as f64 - mean).powi(2))
+                .sum();
+            let n = self.iter().flat_map(|v| v.iter()).count() as f64;
+
+            let sd = (distance_sum / n).sqrt();
+
+            sd
+        }
     }
 }
 
@@ -321,13 +343,15 @@ fn main() {
     println!("The highest dice rolled of all dice was a {}", roll_results.highest());
     println!("The lowest dice rolled of all dice was a {}", roll_results.lowest());
 
-    println!("\nFREQUENCY DISTRIBUTION ({} dice)", total_dice_rolled);
+    println!("\nFREQUENCY DISTRIBUTION");
     println!("------------------------------------------");
     let fd = roll_results.freq_dist();
     println!("PIPS |  1  |  2  |  3  |  4  |  5  |  6  |");
     println!("------------------------------------------");
     println!("FREQ |  {:?}  |  {:?}  |  {:?}  |  {:?}  |  {:?}  |  {:?}  |", fd.get(&1).unwrap(), fd.get(&2).unwrap(), fd.get(&3).unwrap(), fd.get(&4).unwrap(), fd.get(&5).unwrap(), fd.get(&6).unwrap());
     println!("------------------------------------------");
+
+    println!("\nSTANDARD DEVIATION = {}", roll_results.std_dev());
 
     println!("");
 }
@@ -339,6 +363,7 @@ fn main() {
 // TESTS //
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]

@@ -1,0 +1,19 @@
+    Average Roll: Calculate and display the average value rolled across all dice rolls. This can give players an idea of the typical outcome they can expect.
+
+    Frequency Distribution: Show the frequency of each roll value (1 to 6) across all dice rolls. This can help visualize the distribution of outcomes and identify any biases in the dice rolls.
+
+    Standard Deviation: Calculate the standard deviation of the roll values. This measures the spread or variability of the roll outcomes, providing insights into the consistency of the dice rolls.
+
+    Roll Sequences: Identify and display any specific roll sequences that occurred frequently or rarely. This can be interesting for analyzing patterns in the dice rolls.
+
+    Probability of Specific Outcomes: Calculate the probability of rolling specific combinations (e.g., doubles, triples, specific sums) based on the gathered data. This can be useful for strategic gameplay or analysis.
+
+    Luck Factor: Introduce a metric or calculation to represent the "luck factor" of each roll or player. This can be based on deviations from expected outcomes or other criteria.
+
+    Roll Trends Over Time: If you're simulating multiple rounds or sessions, analyze and display trends in roll outcomes over time. This can include changes in average rolls, frequency distributions, etc.
+
+    Extreme Rolls: Highlight any exceptionally high or low rolls and their frequencies. This can add excitement and curiosity to the analysis.
+
+    Dice Pairings: If rolling multiple dice at once, analyze and display common pairings of dice values. This can be relevant for games or scenarios involving multiple dice.
+
+    Time-Series Analysis: If applicable, analyze the dice rolls over time (if they are not all done in a single session) to identify trends or patterns based on session duration or other time-related factors.
